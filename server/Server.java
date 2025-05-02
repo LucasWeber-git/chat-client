@@ -5,7 +5,6 @@ import java.util.List;
 
 public class Server {
 
-    //TODO: fazer alguma forma de pegar os clients sem ser static
     public static final List<ConnectedClient> clients = new ArrayList<>();
 
     public void waitForClients() {
@@ -18,16 +17,33 @@ public class Server {
             while (true) {
                 socket = serverSocket.accept();
 
-                ConnectedClient client = new ConnectedClient(socket, "Nome");
+                ConnectedClient client = new ConnectedClient(socket);
                 clients.add(client);
-
-                System.out.printf("Connected: %s\n", client.getName());
             }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             close(serverSocket, socket);
         }
+    }
+
+    public static void createUser(ConnectedClient sender, ParsedMessage message) {
+        //TODO: ProtocolProerties.USERNAME
+        System.out.println("Usuário conectado: " + message.getProperties().get(ProtocolProperties.USERNAME));
+    }
+
+    public static void sendPublicMessage(ConnectedClient sender,  ParsedMessage message) {
+        for (ConnectedClient client : Server.clients) {
+            if (client == sender) {
+                continue;
+            }
+            client.sendMessage(message.getProperties().get(ProtocolProperties.CONTENT));
+        }
+    }
+
+    public static void sendPrivateMessage(ConnectedClient sender,  ParsedMessage message) {
+        //TODO: ProtocolProerties.RECIPIENT
+        System.out.println("Usuário enviou mensagem privada para: " + message.getProperties().get(ProtocolProperties.RECIPIENT));
     }
 
     private void close(ServerSocket serverSocket, Socket socket) {

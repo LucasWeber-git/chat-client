@@ -1,0 +1,14 @@
+import static java.util.Arrays.asList;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class ProtocolProperties {
+
+    public static final String CONTENT = "content";
+    public static final String USERNAME = "username";
+    public static final String RECIPIENT = "recipient";
+
+    public static final List<String> allProperties = new ArrayList<>(asList(CONTENT, USERNAME, RECIPIENT));
+
+}

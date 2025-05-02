@@ -1,20 +1,18 @@
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
 public class ConnectedClient implements Runnable {
 
-    private final String name;
     private final Socket socket;
 
     private BufferedReader in;
     private PrintWriter out;
 
-    public ConnectedClient(Socket socket, String name) {
+    public ConnectedClient(Socket socket) {
         this.socket = socket;
-        this.name = name;
-
         this.setup();
     }
 
@@ -30,21 +28,27 @@ public class ConnectedClient implements Runnable {
         }
     }
 
-    public void waitMessages() {
-        String msg = "";
-
+    public void waitForMessages() {
         try {
             while (true) {
-                msg = in.readLine();
-                for (ConnectedClient c : Server.clients) {
-                    if (c == this) {
-                        continue;
-                    }
-                    c.sendMessage(msg);
-                }
+                messageReceived(in.readLine());
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void messageReceived(String header) throws IOException {
+        if (ProtocolValidator.isHeaderValid(header)) {
+            StringBuilder message = new StringBuilder(header);
+
+            int size = Integer.parseInt(Protocol.getLineFirstValue(header));
+
+            for (int i = 1; i <= size; i++) {
+                message.append("\n").append(in.readLine());
+            }
+
+            Protocol.execute(this, message.toString());
         }
     }
 
@@ -63,13 +67,9 @@ public class ConnectedClient implements Runnable {
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
     @Override
     public void run() {
-        waitMessages();
+        waitForMessages();
     }
 
 }

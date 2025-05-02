@@ -7,8 +7,10 @@ import static protocol.ProtocolMethods.CREATE_USER;
 import static protocol.ProtocolMethods.GET_USERS;
 import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
 import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.ProtocolMethods.USER_CREATED;
 import static protocol.ProtocolProperties.CONTENT;
 import static protocol.ProtocolProperties.RECIPIENT;
+import static protocol.ProtocolProperties.SENDER;
 import static protocol.ProtocolProperties.USERNAME;
 import static protocol.ProtocolProperties.USERNAMES;
 
@@ -81,6 +83,7 @@ public class Server {
         if (findClient(username) != null) {
             System.out.println("Duplicated user");
             sender.sendMessage(1, CREATE_USER, DUPLICATED_USER);
+            return;
         }
 
         int pos = clients.indexOf(sender);
@@ -90,6 +93,12 @@ public class Server {
 
         System.out.println("User created: " + username);
         sender.sendMessage(CREATE_USER);
+
+        for (ConnectedClient client : clients) {
+            if (client != sender) {
+                client.sendMessage(USER_CREATED);
+            }
+        }
     }
 
     private void getUsers(ConnectedClient sender) {
@@ -97,7 +106,7 @@ public class Server {
             .map(ConnectedClient::getUsername)
             .collect(Collectors.toList());
 
-        String body = formatProperty(USERNAMES, String.join(SEPARATOR, usernames));
+        String body = formatProperty(USERNAMES, String.join(",", usernames));
 
         System.out.println("Users retrieved");
         sender.sendMessage(1, GET_USERS, body);
@@ -105,12 +114,13 @@ public class Server {
 
     private void sendPublicMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
         for (ConnectedClient client : clients) {
-            if (client == sender) {
-                continue;
-            }
+            if (client != sender) {
+                String senderUser = formatProperty(SENDER, sender.getUsername());
+                String content = formatProperty(CONTENT, message.getProperty(CONTENT));
+                String body = senderUser + content;
 
-            String body = formatProperty(CONTENT, message.getProperty(CONTENT));
-            client.sendMessage(1, SEND_PUBLIC_MESSAGE, body);
+                client.sendMessage(2, SEND_PUBLIC_MESSAGE, body);
+            }
         }
 
         System.out.println("Public message sent by " + sender.getUsername());
@@ -121,8 +131,11 @@ public class Server {
         String username = sender.getUsername();
         ConnectedClient recipient = findClient(message.getProperty(RECIPIENT));
 
-        String body = formatProperty(CONTENT, message.getProperty(CONTENT));
-        recipient.sendMessage(1, SEND_PRIVATE_MESSAGE, body);
+        String senderUser = formatProperty(SENDER, sender.getUsername());
+        String content = formatProperty(CONTENT, message.getProperty(CONTENT));
+        String body = senderUser + content;
+
+        recipient.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
 
         System.out.printf("\nMessage sent from %s to %s", username, recipient.getUsername());
         sender.sendMessage(SEND_PRIVATE_MESSAGE);

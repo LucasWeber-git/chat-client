@@ -11,7 +11,10 @@ import static protocol.ProtocolMethods.CREATE_USER;
 import static protocol.ProtocolMethods.GET_USERS;
 import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
 import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.ProtocolMethods.USER_CREATED;
+import static protocol.ProtocolProperties.CONTENT;
 import static protocol.ProtocolProperties.ERROR;
+import static protocol.ProtocolProperties.SENDER;
 import static protocol.ProtocolProperties.USERNAMES;
 import static protocol.ProtocolValidator.isHeaderValid;
 
@@ -20,8 +23,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
-
-import javax.swing.SwingUtilities;
 
 import client.gui.ChatGUI;
 import protocol.ParsedMessage;
@@ -53,15 +54,10 @@ public class Client implements Runnable {
             Thread t = new Thread(this);
             t.start();
 
-            startGUI();
+            gui = new ChatGUI(this);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void startGUI() {
-        gui = new ChatGUI(this);
-        SwingUtilities.invokeLater(() -> gui.setVisible(true));
     }
 
     private void waitForMessages() {
@@ -102,12 +98,15 @@ public class Client implements Runnable {
                 handleGetUsersResponse(parsedMessage);
                 break;
 
+            case USER_CREATED:
+                handleUserCreated();
+
             case SEND_PRIVATE_MESSAGE:
-                handlePrivateMessageResponse();
+                handlePrivateMessageResponse(parsedMessage);
                 break;
 
             case SEND_PUBLIC_MESSAGE:
-                handlePublicMessageResponse();
+                handlePublicMessageResponse(parsedMessage);
                 break;
         }
     }
@@ -115,6 +114,8 @@ public class Client implements Runnable {
     private void handleCreateUserResponse(ParsedMessage message) {
         if (DUPLICATED_USER.equals(message.getPropertyNullable(ERROR))) {
             gui.inputUsername("Usuário já cadastrado! Digite outro nome:");
+        } else {
+            gui.setUserCreated(true);
         }
     }
 
@@ -126,14 +127,34 @@ public class Client implements Runnable {
         gui.render();
     }
 
-    private void handlePrivateMessageResponse() {
-        System.out.println("Private message sent");
-        // TODO: aqui tem que atualizar o histórico
+    private void handleUserCreated() {
+        sendMessage(GET_USERS);
     }
 
-    private void handlePublicMessageResponse() {
-        System.out.println("Public message sent");
-        // TODO: aqui tem que atualizar o histórico
+    private void handlePrivateMessageResponse(ParsedMessage message) throws Exception {
+        if (message.getSize() == 0) {
+            System.out.println("Private message sent");
+        } else {
+            String sender = message.getProperty(SENDER);
+            String content = message.getProperty(CONTENT);
+
+            gui.updateHistory(sender, sender, content);
+
+            System.out.println("Message received from " + sender);
+        }
+    }
+
+    private void handlePublicMessageResponse(ParsedMessage message) throws Exception {
+        if (message.getSize() == 0) {
+            System.out.println("Public message sent");
+        } else {
+            String sender = message.getProperty(SENDER);
+            String content = message.getProperty(CONTENT);
+
+            gui.updateHistory(sender, sender, content);
+
+            System.out.println("Message received from " + sender);
+        }
     }
 
     public void sendMessage(String method) {

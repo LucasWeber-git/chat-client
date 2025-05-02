@@ -17,6 +17,7 @@ import static protocol.ProtocolProperties.USERNAME;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,10 +36,9 @@ public class ChatGUI extends JFrame {
 
     private final Client client;
 
-    private Map<String, String> chatHistory;
-
-    // TODO: refatorar essa classe (build)
-
+    private String username;
+    private boolean isUserCreated = false;
+    private final Map<String, String> chatHistory = new HashMap<>();
 
     private final JList<String> userList;
     private final JTextArea chatArea;
@@ -49,6 +49,9 @@ public class ChatGUI extends JFrame {
     public ChatGUI(Client client) {
         super("Cliente para Chat");
         this.client = client;
+
+        inputUsername("Digite seu nome:");
+        client.sendMessage(GET_USERS);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 500);
@@ -67,12 +70,6 @@ public class ChatGUI extends JFrame {
 
         btSend = new JButton("Enviar mensagem");
         btSend.addActionListener(e -> onClickSendButton());
-
-        render();
-
-        inputUsername("Digite seu nome:");
-
-        client.sendMessage(GET_USERS);
     }
 
     public void render() {
@@ -89,10 +86,20 @@ public class ChatGUI extends JFrame {
         getContentPane().add(usersScrollPane, WEST);
         getContentPane().add(new JScrollPane(chatArea), CENTER);
         getContentPane().add(inputPanel, SOUTH);
+
+        while (!isUserCreated) {
+            try {
+                Thread.sleep(10);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        this.setVisible(true);
     }
 
     public void inputUsername(String message) {
-        String username = showInputDialog(null, message);
+        username = showInputDialog(null, message);
         String body = formatProperty(USERNAME, username);
 
         client.sendMessage(1, CREATE_USER, body);
@@ -121,7 +128,9 @@ public class ChatGUI extends JFrame {
         String body = formatProperty(CONTENT, txtMessage.getText());
         client.sendMessage(1, SEND_PUBLIC_MESSAGE, body);
 
-        // TODO: aqui tem que atualizar o histórico de todos
+        for (String key : chatHistory.keySet()) {
+            updateHistory(key, username, txtMessage.getText());
+        }
     }
 
     private void sendPrivateMessage() {
@@ -131,11 +140,22 @@ public class ChatGUI extends JFrame {
 
         client.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
 
-        // TODO: aqui tem que atualizar o histórico
+        updateHistory(userList.getSelectedValue(), username, txtMessage.getText());
+    }
+
+    public void updateHistory(String key, String sender, String newMessage) {
+        String currentValue = chatHistory.get(key);
+        String newValue = currentValue.concat(sender + ": " + newMessage);
+
+        chatHistory.replace(key, newValue);
     }
 
     public void setUsers(final List<String> users) {
         userList.setListData(users.toArray(new String[0]));
+    }
+
+    public void setUserCreated(final boolean userCreated) {
+        isUserCreated = userCreated;
     }
 
 }

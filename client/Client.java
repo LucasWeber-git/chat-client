@@ -45,6 +45,7 @@ public class Client implements Runnable {
     public void waitForMessages() {
         try {
             while (true) {
+                //TODO: aqui entra a leitura
                 System.out.println(in.readLine());
             }
         } catch (Exception e) {

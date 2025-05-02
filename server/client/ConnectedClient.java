@@ -1,26 +1,31 @@
 package server.client;
 
 import static java.lang.Integer.parseInt;
+import static server.protocol.Protocol.NEW_LINE;
+import static server.protocol.Protocol.SEPARATOR;
+import static server.protocol.Protocol.ZERO;
 import static server.protocol.Protocol.getLineFirstValue;
 import static server.protocol.ProtocolValidator.isHeaderValid;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-import server.protocol.Protocol;
+import server.Server;
 
 public class ConnectedClient implements Runnable {
 
     private final Socket socket;
+    private final Server server;
 
     private BufferedReader in;
     private PrintWriter out;
+    private String username;
 
-    public ConnectedClient(Socket socket) {
+    public ConnectedClient(Socket socket, Server server) {
         this.socket = socket;
+        this.server = server;
         this.setup();
     }
 
@@ -37,16 +42,16 @@ public class ConnectedClient implements Runnable {
     }
 
     public void waitForMessages() {
-        try {
-            while (true) {
+        while (true) {
+            try {
                 messageReceived(in.readLine());
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    private void messageReceived(String header) throws IOException {
+    private void messageReceived(String header) throws Exception {
         if (isHeaderValid(header)) {
             StringBuilder message = new StringBuilder(header);
 
@@ -56,13 +61,21 @@ public class ConnectedClient implements Runnable {
                 message.append("\n").append(in.readLine());
             }
 
-            Protocol.execute(this, message.toString());
+            server.processRequest(this, message.toString());
         }
     }
 
     public void sendMessage(String msg) {
         out.println(msg);
         out.flush();
+    }
+
+    public void sendEmptyResponse(String method) {
+        sendMessage(ZERO + SEPARATOR + method);
+    }
+
+    public void sendResponse(int size, String method, String body) {
+        sendMessage(size + SEPARATOR + method + NEW_LINE + body);
     }
 
     public void close() {
@@ -73,6 +86,14 @@ public class ConnectedClient implements Runnable {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @Override

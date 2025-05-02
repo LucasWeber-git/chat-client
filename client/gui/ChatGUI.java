@@ -24,13 +24,11 @@ import client.Client;
 public class ChatGUI extends JFrame {
 
     private final Client client;
-    private final String username;
 
     public ChatGUI(Client client) {
         super("Cliente para Chat");
 
         this.client = client;
-        this.username = showInputDialog(null, "Digite seu nome:");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 500);
@@ -45,7 +43,8 @@ public class ChatGUI extends JFrame {
         getContentPane().add(chatAreaPane, CENTER);
         getContentPane().add(inputPanel, SOUTH);
 
-        this.client.send("1|CREATE_USER\n" + "username|" + this.username);
+        String username = showInputDialog(null, "Digite seu nome:");
+        this.client.send("1|CREATE_USER\n" + "username|" + username);
     }
 
     private JScrollPane buildUsersList(List<String> users) {

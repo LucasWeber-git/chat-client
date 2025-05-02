@@ -5,9 +5,9 @@
 ## Protocolo
 
 - A mensagem é lida linha a linha, sendo que o caractere de quebra é o `\n`
-- A primeira linha (header) é composta por: `quantidade de linhas` `|` `função`
+- A primeira linha (header) é composta por: `quantidade de linhas` `|` `método`
   - A quantidade de linhas indica quantas linhas o `corpo` da mensagem contém
-  - As funções podem ser: `CREATE_USER`, `PUBLIC_MESSAGE` e `PRIVATE_MESSAGE`
+  - Os métodos podem ser: `GET_USERS`, `CREATE_USER`, `PUBLIC_MESSAGE` e `PRIVATE_MESSAGE`
 - O restante da mensagem é o corpo, sendo cada propriedade composta por chave/valor e o caractere de separação é `|`
 - Obs: caracteres em branco no início e no final serão ignorados
 

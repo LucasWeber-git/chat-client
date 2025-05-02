@@ -26,4 +26,14 @@ public class ParsedMessage {
         return properties;
     }
 
+    public String getProperty(String key) throws Exception {
+        String value = properties.get(key);
+
+        if (value == null || value.isBlank()) {
+            System.out.printf("\nPropriedade %s não informada", key);
+            throw new Exception("Propriedade não informada");
+        }
+        return value;
+    }
+
 }

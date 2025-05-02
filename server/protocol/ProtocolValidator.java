@@ -1,8 +1,10 @@
 package server.protocol;
 
 import static java.lang.Integer.parseInt;
-import static server.protocol.Protocol.*;
-import static server.protocol.ProtocolMethods.*;
+import static server.protocol.Protocol.SEPARATOR;
+import static server.protocol.Protocol.getLineFirstValue;
+import static server.protocol.Protocol.getLineLastValue;
+import static server.protocol.ProtocolMethods.allMethods;
 import static server.protocol.ProtocolProperties.allProperties;
 
 import java.io.BufferedReader;

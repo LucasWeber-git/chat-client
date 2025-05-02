@@ -5,13 +5,23 @@ import static java.awt.BorderLayout.EAST;
 import static java.awt.BorderLayout.SOUTH;
 import static java.awt.BorderLayout.WEST;
 import static javax.swing.JOptionPane.showInputDialog;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
+import static protocol.Protocol.formatProperty;
+import static protocol.ProtocolMethods.CREATE_USER;
+import static protocol.ProtocolMethods.GET_USERS;
+import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
+import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.ProtocolProperties.CONTENT;
+import static protocol.ProtocolProperties.RECIPIENT;
+import static protocol.ProtocolProperties.USERNAME;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -25,58 +35,107 @@ public class ChatGUI extends JFrame {
 
     private final Client client;
 
+    private Map<String, String> chatHistory;
+
+    // TODO: refatorar essa classe (build)
+
+
+    private final JList<String> userList;
+    private final JTextArea chatArea;
+    private final JTextField txtMessage;
+    private final JCheckBox ckPublic;
+    private final JButton btSend;
+
     public ChatGUI(Client client) {
         super("Cliente para Chat");
-
         this.client = client;
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 500);
         setLocationRelativeTo(null);
 
-        JScrollPane usersListPane = buildUsersList(new ArrayList<>());
-        JScrollPane chatAreaPane = buildChatArea();
-        JPanel inputPanel = buildInputPanel();
+        userList = new JList<>();
+        userList.setSelectionMode(SINGLE_SELECTION);
+        userList.addListSelectionListener(e -> onUserSelectionChange());
 
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(usersListPane, WEST);
-        getContentPane().add(chatAreaPane, CENTER);
-        getContentPane().add(inputPanel, SOUTH);
-
-        String username = showInputDialog(null, "Digite seu nome:");
-        this.client.send("1|CREATE_USER\n" + "username|" + username);
-    }
-
-    private JScrollPane buildUsersList(List<String> users) {
-        JList<String> userList = new JList<>(users.toArray(new String[0]));
-
-        JScrollPane userScrollPane = new JScrollPane(userList);
-        userScrollPane.setPreferredSize(new Dimension(120, 0));
-
-        return userScrollPane;
-    }
-
-    private JScrollPane buildChatArea() {
-        JTextArea chatArea = new JTextArea();
+        chatArea = new JTextArea();
         chatArea.setEditable(false);
 
-        return new JScrollPane(chatArea);
+        txtMessage = new JTextField();
+
+        ckPublic = new JCheckBox("Mensagem pública");
+
+        btSend = new JButton("Enviar mensagem");
+        btSend.addActionListener(e -> onClickSendButton());
+
+        render();
+
+        inputUsername("Digite seu nome:");
+
+        client.sendMessage(GET_USERS);
     }
 
-    private JPanel buildInputPanel() {
+    public void render() {
+        JScrollPane usersScrollPane = new JScrollPane(userList);
+        usersScrollPane.setPreferredSize(new Dimension(120, 0));
+
         JPanel inputPanel = new JPanel(new BorderLayout());
-        inputPanel.add(new JTextField(), CENTER);
 
-        JButton sendButton = new JButton("Enviar mensagem");
-        sendButton.addActionListener(e -> onClickSendButton());
-        inputPanel.add(sendButton, EAST);
+        inputPanel.add(txtMessage, CENTER);
+        inputPanel.add(ckPublic, EAST);
+        inputPanel.add(btSend, EAST);
 
-        return inputPanel;
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(usersScrollPane, WEST);
+        getContentPane().add(new JScrollPane(chatArea), CENTER);
+        getContentPane().add(inputPanel, SOUTH);
+    }
+
+    public void inputUsername(String message) {
+        String username = showInputDialog(null, message);
+        String body = formatProperty(USERNAME, username);
+
+        client.sendMessage(1, CREATE_USER, body);
+    }
+
+    private void onUserSelectionChange() {
+        String userSelected = userList.getSelectedValue();
+
+        if (chatHistory.containsKey(userSelected)) {
+            chatArea.setText(chatHistory.get(userSelected));
+        } else {
+            chatHistory.put(userSelected, "");
+            chatArea.setText("");
+        }
     }
 
     private void onClickSendButton() {
-        client.send("1|SEND_PUBLIC_MESSAGE\ncontent|mensagem de teste");
-        client.send("1|SEND_PRIVATE_MESSAGE\nrecipient|usuario1");
+        if (ckPublic.isSelected()) {
+            this.sendPublicMessage();
+        } else {
+            this.sendPrivateMessage();
+        }
+    }
+
+    private void sendPublicMessage() {
+        String body = formatProperty(CONTENT, txtMessage.getText());
+        client.sendMessage(1, SEND_PUBLIC_MESSAGE, body);
+
+        // TODO: aqui tem que atualizar o histórico de todos
+    }
+
+    private void sendPrivateMessage() {
+        String recipient = formatProperty(RECIPIENT, userList.getSelectedValue());
+        String content = formatProperty(CONTENT, txtMessage.getText());
+        String body = recipient + content;
+
+        client.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
+
+        // TODO: aqui tem que atualizar o histórico
+    }
+
+    public void setUsers(final List<String> users) {
+        userList.setListData(users.toArray(new String[0]));
     }
 
 }

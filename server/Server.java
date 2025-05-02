@@ -2,6 +2,7 @@ package server;
 
 import static protocol.Errors.DUPLICATED_USER;
 import static protocol.Protocol.SEPARATOR;
+import static protocol.Protocol.formatProperty;
 import static protocol.ProtocolMethods.CREATE_USER;
 import static protocol.ProtocolMethods.GET_USERS;
 import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
@@ -9,6 +10,7 @@ import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
 import static protocol.ProtocolProperties.CONTENT;
 import static protocol.ProtocolProperties.RECIPIENT;
 import static protocol.ProtocolProperties.USERNAME;
+import static protocol.ProtocolProperties.USERNAMES;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,15 +18,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import server.client.ConnectedClient;
 import protocol.ParsedMessage;
 import protocol.Protocol;
+import server.client.ConnectedClient;
 
 public class Server {
 
     private final List<ConnectedClient> clients = new ArrayList<>();
 
-    public void waitForClients() {
+    public static void main(String[] args) {
+        Server server = new Server();
+        server.waitForClients();
+    }
+
+    private void waitForClients() {
         ServerSocket serverSocket = null;
         Socket socket = null;
 
@@ -68,11 +75,12 @@ public class Server {
         }
     }
 
-    public void createUser(ConnectedClient sender, ParsedMessage message) throws Exception {
+    private void createUser(ConnectedClient sender, ParsedMessage message) throws Exception {
         String username = message.getProperty(USERNAME);
 
         if (findClient(username) != null) {
-            sender.sendResponse(1, CREATE_USER, DUPLICATED_USER);
+            System.out.println("Duplicated user");
+            sender.sendMessage(1, CREATE_USER, DUPLICATED_USER);
         }
 
         int pos = clients.indexOf(sender);
@@ -80,39 +88,44 @@ public class Server {
         sender.setUsername(username);
         clients.set(pos, sender);
 
-        System.out.println("Usuário criado: " + username);
-        sender.sendEmptyResponse(CREATE_USER);
+        System.out.println("User created: " + username);
+        sender.sendMessage(CREATE_USER);
     }
 
-    public void getUsers(ConnectedClient sender) {
+    private void getUsers(ConnectedClient sender) {
         List<String> usernames = clients.stream()
             .map(ConnectedClient::getUsername)
             .collect(Collectors.toList());
 
+        String body = formatProperty(USERNAMES, String.join(SEPARATOR, usernames));
+
         System.out.println("Users retrieved");
-        sender.sendResponse(1, GET_USERS, String.join(SEPARATOR, usernames));
+        sender.sendMessage(1, GET_USERS, body);
     }
 
-    public void sendPublicMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
+    private void sendPublicMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
         for (ConnectedClient client : clients) {
             if (client == sender) {
                 continue;
             }
-            client.sendMessage(message.getProperty(CONTENT));
+
+            String body = formatProperty(CONTENT, message.getProperty(CONTENT));
+            client.sendMessage(1, SEND_PUBLIC_MESSAGE, body);
         }
 
         System.out.println("Public message sent by " + sender.getUsername());
-        sender.sendEmptyResponse(SEND_PUBLIC_MESSAGE);
+        sender.sendMessage(SEND_PUBLIC_MESSAGE);
     }
 
-    public void sendPrivateMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
+    private void sendPrivateMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
         String username = sender.getUsername();
         ConnectedClient recipient = findClient(message.getProperty(RECIPIENT));
 
-        recipient.sendMessage(message.getProperty(CONTENT));
+        String body = formatProperty(CONTENT, message.getProperty(CONTENT));
+        recipient.sendMessage(1, SEND_PRIVATE_MESSAGE, body);
 
         System.out.printf("\nMessage sent from %s to %s", username, recipient.getUsername());
-        sender.sendEmptyResponse(SEND_PRIVATE_MESSAGE);
+        sender.sendMessage(SEND_PRIVATE_MESSAGE);
     }
 
     private ConnectedClient findClient(String username) {
@@ -139,11 +152,6 @@ public class Server {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    public static void main(String[] args) {
-        Server server = new Server();
-        server.waitForClients();
     }
 
 }

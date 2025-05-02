@@ -36,4 +36,8 @@ public class ParsedMessage {
         return value;
     }
 
+    public String getPropertyNullable(String key) {
+        return properties.get(key);
+    }
+
 }

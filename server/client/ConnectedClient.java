@@ -41,6 +41,16 @@ public class ConnectedClient implements Runnable {
         }
     }
 
+    public void sendMessage(String method) {
+        out.println(ZERO + SEPARATOR + method);
+        out.flush();
+    }
+
+    public void sendMessage(int size, String method, String body) {
+        out.println(size + SEPARATOR + method + NEW_LINE + body);
+        out.flush();
+    }
+
     public void waitForMessages() {
         while (true) {
             try {
@@ -63,19 +73,6 @@ public class ConnectedClient implements Runnable {
 
             server.processRequest(this, message.toString());
         }
-    }
-
-    public void sendMessage(String msg) {
-        out.println(msg);
-        out.flush();
-    }
-
-    public void sendEmptyResponse(String method) {
-        sendMessage(ZERO + SEPARATOR + method);
-    }
-
-    public void sendResponse(int size, String method, String body) {
-        sendMessage(size + SEPARATOR + method + NEW_LINE + body);
     }
 
     public void close() {

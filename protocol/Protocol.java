@@ -25,4 +25,8 @@ public class Protocol {
         return line.substring(line.indexOf(SEPARATOR) + 1).trim();
     }
 
+    public static String formatProperty(String key, String value) {
+        return key + SEPARATOR + value + NEW_LINE;
+    }
+
 }

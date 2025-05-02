@@ -1,3 +1,5 @@
+package server.protocol;
+
 import static java.util.Arrays.asList;
 
 import java.util.ArrayList;

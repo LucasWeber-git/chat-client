@@ -1,3 +1,10 @@
+package server.protocol;
+
+import static java.lang.Integer.parseInt;
+import static server.protocol.Protocol.*;
+import static server.protocol.ProtocolMethods.*;
+import static server.protocol.ProtocolProperties.allProperties;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,7 +23,7 @@ public class ProtocolValidator {
                 return false;
             }
 
-            Integer size = Integer.valueOf(Protocol.getLineFirstValue(header));
+            Integer size = Integer.valueOf(getLineFirstValue(header));
             if (!isPropertiesValid(reader, size)) {
                 return false;
             }
@@ -29,15 +36,15 @@ public class ProtocolValidator {
     }
 
     public static boolean isHeaderValid(String header) {
-        if (!header.contains(Protocol.SEPARATOR)) {
+        if (!header.contains(SEPARATOR)) {
             System.out.println("Missing separator character on header");
             return false;
         }
 
-        String size = Protocol.getLineFirstValue(header);
-        String method = Protocol.getLineLastValue(header);
+        String size = getLineFirstValue(header);
+        String method = getLineLastValue(header);
 
-        if (!ProtocolMethods.allMethods.contains(method)) {
+        if (!allMethods.contains(method)) {
             System.out.printf("\nMethod %s is not recognized", method);
         }
 
@@ -54,13 +61,13 @@ public class ProtocolValidator {
         int lineCount = 1;
 
         while ((line = reader.readLine()) != null && lineCount <= size) {
-            if (!line.contains(Protocol.SEPARATOR)) {
+            if (!line.contains(SEPARATOR)) {
                 System.out.printf("\nMissing separator character on line %d", lineCount);
                 return false;
             }
 
-            String property = Protocol.getLineFirstValue(line);
-            if (!ProtocolProperties.allProperties.contains(property)) {
+            String property = getLineFirstValue(line);
+            if (!allProperties.contains(property)) {
                 System.out.printf("\nProperty %s is not recognized", property);
                 return false;
             }
@@ -76,7 +83,7 @@ public class ProtocolValidator {
         }
 
         try {
-            Integer.parseInt(value);
+            parseInt(value);
             return true;
         } catch (NumberFormatException e) {
             return false;

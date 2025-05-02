@@ -1,7 +1,10 @@
+package client.gui;
+
 import static java.awt.BorderLayout.CENTER;
 import static java.awt.BorderLayout.EAST;
 import static java.awt.BorderLayout.SOUTH;
 import static java.awt.BorderLayout.WEST;
+import static javax.swing.JOptionPane.showInputDialog;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -11,11 +14,12 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import client.Client;
 
 public class ChatGUI extends JFrame {
 
@@ -26,7 +30,7 @@ public class ChatGUI extends JFrame {
         super("Cliente para Chat");
 
         this.client = client;
-        this.username = JOptionPane.showInputDialog(null, "Digite seu nome:");
+        this.username = showInputDialog(null, "Digite seu nome:");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 500);

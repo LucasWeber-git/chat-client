@@ -1,7 +1,16 @@
+package server;
+
+import static server.protocol.ProtocolProperties.CONTENT;
+import static server.protocol.ProtocolProperties.RECIPIENT;
+import static server.protocol.ProtocolProperties.USERNAME;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import server.client.ConnectedClient;
+import server.protocol.ParsedMessage;
 
 public class Server {
 
@@ -28,8 +37,7 @@ public class Server {
     }
 
     public static void createUser(ConnectedClient sender, ParsedMessage message) {
-        //TODO: ProtocolProerties.USERNAME
-        System.out.println("Usuário conectado: " + message.getProperties().get(ProtocolProperties.USERNAME));
+        System.out.println("Usuário conectado: " + message.getProperties().get(USERNAME));
     }
 
     public static void sendPublicMessage(ConnectedClient sender,  ParsedMessage message) {
@@ -37,13 +45,12 @@ public class Server {
             if (client == sender) {
                 continue;
             }
-            client.sendMessage(message.getProperties().get(ProtocolProperties.CONTENT));
+            client.sendMessage(message.getProperties().get(CONTENT));
         }
     }
 
     public static void sendPrivateMessage(ConnectedClient sender,  ParsedMessage message) {
-        //TODO: ProtocolProerties.RECIPIENT
-        System.out.println("Usuário enviou mensagem privada para: " + message.getProperties().get(ProtocolProperties.RECIPIENT));
+        System.out.println("Usuário enviou mensagem privada para: " + message.getProperties().get(RECIPIENT));
     }
 
     private void close(ServerSocket serverSocket, Socket socket) {
@@ -66,8 +73,8 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        Server rs = new Server();
-        rs.waitForClients();
+        Server server = new Server();
+        server.waitForClients();
     }
 
 }

@@ -1,8 +1,16 @@
+package server.client;
+
+import static java.lang.Integer.parseInt;
+import static server.protocol.Protocol.getLineFirstValue;
+import static server.protocol.ProtocolValidator.isHeaderValid;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+
+import server.protocol.Protocol;
 
 public class ConnectedClient implements Runnable {
 
@@ -39,10 +47,10 @@ public class ConnectedClient implements Runnable {
     }
 
     private void messageReceived(String header) throws IOException {
-        if (ProtocolValidator.isHeaderValid(header)) {
+        if (isHeaderValid(header)) {
             StringBuilder message = new StringBuilder(header);
 
-            int size = Integer.parseInt(Protocol.getLineFirstValue(header));
+            int size = parseInt(getLineFirstValue(header));
 
             for (int i = 1; i <= size; i++) {
                 message.append("\n").append(in.readLine());

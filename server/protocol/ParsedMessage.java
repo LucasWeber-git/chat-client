@@ -1,3 +1,5 @@
+package server.protocol;
+
 import java.util.Map;
 
 public class ParsedMessage {

@@ -1,11 +1,11 @@
-package server.protocol;
+package protocol;
 
 import static java.lang.Integer.parseInt;
-import static server.protocol.Protocol.SEPARATOR;
-import static server.protocol.Protocol.getLineFirstValue;
-import static server.protocol.Protocol.getLineLastValue;
-import static server.protocol.ProtocolMethods.allMethods;
-import static server.protocol.ProtocolProperties.allProperties;
+import static protocol.Protocol.SEPARATOR;
+import static protocol.Protocol.getLineFirstValue;
+import static protocol.Protocol.getLineLastValue;
+import static protocol.ProtocolMethods.allMethods;
+import static protocol.ProtocolProperties.allProperties;
 
 import java.io.BufferedReader;
 import java.io.IOException;

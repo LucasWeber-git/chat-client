@@ -1,13 +1,14 @@
 package server;
 
-import static server.protocol.Protocol.SEPARATOR;
-import static server.protocol.ProtocolMethods.CREATE_USER;
-import static server.protocol.ProtocolMethods.GET_USERS;
-import static server.protocol.ProtocolMethods.PRIVATE_MESSAGE;
-import static server.protocol.ProtocolMethods.PUBLIC_MESSAGE;
-import static server.protocol.ProtocolProperties.CONTENT;
-import static server.protocol.ProtocolProperties.RECIPIENT;
-import static server.protocol.ProtocolProperties.USERNAME;
+import static protocol.Errors.DUPLICATED_USER;
+import static protocol.Protocol.SEPARATOR;
+import static protocol.ProtocolMethods.CREATE_USER;
+import static protocol.ProtocolMethods.GET_USERS;
+import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
+import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.ProtocolProperties.CONTENT;
+import static protocol.ProtocolProperties.RECIPIENT;
+import static protocol.ProtocolProperties.USERNAME;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import server.client.ConnectedClient;
-import server.protocol.ParsedMessage;
-import server.protocol.Protocol;
+import protocol.ParsedMessage;
+import protocol.Protocol;
 
 public class Server {
 
@@ -49,19 +50,19 @@ public class Server {
         ParsedMessage parsedMessage = Protocol.parseMessage(message);
 
         switch (parsedMessage.getMethod()) {
-            case GET_USERS:
-                getUsers(sender);
-                break;
-
             case CREATE_USER:
                 createUser(sender, parsedMessage);
                 break;
 
-            case PRIVATE_MESSAGE:
+            case GET_USERS:
+                getUsers(sender);
+                break;
+
+            case SEND_PRIVATE_MESSAGE:
                 sendPrivateMessage(sender, parsedMessage);
                 break;
 
-            case PUBLIC_MESSAGE:
+            case SEND_PUBLIC_MESSAGE:
                 sendPublicMessage(sender, parsedMessage);
                 break;
         }
@@ -69,6 +70,11 @@ public class Server {
 
     public void createUser(ConnectedClient sender, ParsedMessage message) throws Exception {
         String username = message.getProperty(USERNAME);
+
+        if (findClient(username) != null) {
+            sender.sendResponse(1, CREATE_USER, DUPLICATED_USER);
+        }
+
         int pos = clients.indexOf(sender);
 
         sender.setUsername(username);
@@ -76,6 +82,15 @@ public class Server {
 
         System.out.println("Usuário criado: " + username);
         sender.sendEmptyResponse(CREATE_USER);
+    }
+
+    public void getUsers(ConnectedClient sender) {
+        List<String> usernames = clients.stream()
+            .map(ConnectedClient::getUsername)
+            .collect(Collectors.toList());
+
+        System.out.println("Users retrieved");
+        sender.sendResponse(1, GET_USERS, String.join(SEPARATOR, usernames));
     }
 
     public void sendPublicMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
@@ -87,7 +102,7 @@ public class Server {
         }
 
         System.out.println("Public message sent by " + sender.getUsername());
-        sender.sendEmptyResponse(PUBLIC_MESSAGE);
+        sender.sendEmptyResponse(SEND_PUBLIC_MESSAGE);
     }
 
     public void sendPrivateMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
@@ -97,16 +112,7 @@ public class Server {
         recipient.sendMessage(message.getProperty(CONTENT));
 
         System.out.printf("\nMessage sent from %s to %s", username, recipient.getUsername());
-        sender.sendEmptyResponse(PRIVATE_MESSAGE);
-    }
-
-    public void getUsers(ConnectedClient sender) {
-        List<String> usernames = clients.stream()
-            .map(ConnectedClient::getUsername)
-            .collect(Collectors.toList());
-
-        System.out.println("Users retrieved");
-        sender.sendResponse(1, GET_USERS, String.join(SEPARATOR, usernames));
+        sender.sendEmptyResponse(SEND_PRIVATE_MESSAGE);
     }
 
     private ConnectedClient findClient(String username) {

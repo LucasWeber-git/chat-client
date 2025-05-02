@@ -1,11 +1,11 @@
 package server.client;
 
 import static java.lang.Integer.parseInt;
-import static server.protocol.Protocol.NEW_LINE;
-import static server.protocol.Protocol.SEPARATOR;
-import static server.protocol.Protocol.ZERO;
-import static server.protocol.Protocol.getLineFirstValue;
-import static server.protocol.ProtocolValidator.isHeaderValid;
+import static protocol.Protocol.NEW_LINE;
+import static protocol.Protocol.SEPARATOR;
+import static protocol.Protocol.ZERO;
+import static protocol.Protocol.getLineFirstValue;
+import static protocol.ProtocolValidator.isHeaderValid;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

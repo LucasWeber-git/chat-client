@@ -1,7 +1,7 @@
-package server.protocol;
+package protocol;
 
-import static server.protocol.Protocol.getLineFirstValue;
-import static server.protocol.Protocol.getLineLastValue;
+import static protocol.Protocol.getLineFirstValue;
+import static protocol.Protocol.getLineLastValue;
 
 import java.io.BufferedReader;
 import java.io.IOException;

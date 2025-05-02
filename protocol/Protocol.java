@@ -1,7 +1,7 @@
-package server.protocol;
+package protocol;
 
-import static server.protocol.ProtocolParser.parse;
-import static server.protocol.ProtocolValidator.validate;
+import static protocol.ProtocolParser.parse;
+import static protocol.ProtocolValidator.validate;
 
 public class Protocol {
 

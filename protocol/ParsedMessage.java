@@ -1,4 +1,4 @@
-package server.protocol;
+package protocol;
 
 import java.util.Map;
 

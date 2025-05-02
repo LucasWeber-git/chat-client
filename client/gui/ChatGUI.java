@@ -75,8 +75,8 @@ public class ChatGUI extends JFrame {
     }
 
     private void onClickSendButton() {
-        client.send("1|PUBLIC_MESSAGE\ncontent|mensagem de teste");
-        client.send("1|PRIVATE_MESSAGE\nrecipient|usuario1");
+        client.send("1|SEND_PUBLIC_MESSAGE\ncontent|mensagem de teste");
+        client.send("1|SEND_PRIVATE_MESSAGE\nrecipient|usuario1");
     }
 
 }

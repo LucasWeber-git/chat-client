@@ -28,6 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import client.Client;
 
@@ -55,7 +56,7 @@ public class ChatGUI extends JFrame {
 
         userList = new JList<>();
         userList.setSelectionMode(SINGLE_SELECTION);
-        userList.addListSelectionListener(e -> onUserSelectionChange());
+        userList.addListSelectionListener(e -> updateChatArea());
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
@@ -69,29 +70,31 @@ public class ChatGUI extends JFrame {
     }
 
     public void render() {
-        JScrollPane usersScrollPane = new JScrollPane(userList);
-        usersScrollPane.setPreferredSize(new Dimension(120, 0));
+        SwingUtilities.invokeLater(() -> {
+            JScrollPane usersScrollPane = new JScrollPane(userList);
+            usersScrollPane.setPreferredSize(new Dimension(120, 0));
 
-        JPanel inputPanel = new JPanel(new BorderLayout());
+            JPanel inputPanel = new JPanel(new BorderLayout());
 
-        inputPanel.add(txtMessage, CENTER);
-        inputPanel.add(ckPublic, EAST);
-        inputPanel.add(btSend, EAST);
+            inputPanel.add(txtMessage, CENTER);
+            inputPanel.add(ckPublic, EAST);
+            inputPanel.add(btSend, EAST);
 
-        getContentPane().setLayout(new BorderLayout());
-        getContentPane().add(usersScrollPane, WEST);
-        getContentPane().add(new JScrollPane(chatArea), CENTER);
-        getContentPane().add(inputPanel, SOUTH);
+            getContentPane().setLayout(new BorderLayout());
+            getContentPane().add(usersScrollPane, WEST);
+            getContentPane().add(new JScrollPane(chatArea), CENTER);
+            getContentPane().add(inputPanel, SOUTH);
 
-        while (!isUserCreated) {
-            try {
-                Thread.sleep(10);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//            while (!isUserCreated) {
+//                try {
+//                    Thread.sleep(10);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
 
-        this.setVisible(true);
+            this.setVisible(true);
+        });
     }
 
     public void inputUsername(String message) {
@@ -99,17 +102,6 @@ public class ChatGUI extends JFrame {
         String body = formatProperty(USERNAME, username);
 
         client.sendMessage(1, CREATE_USER, body);
-    }
-
-    private void onUserSelectionChange() {
-        String userSelected = userList.getSelectedValue();
-
-        if (chatHistory.containsKey(userSelected)) {
-            chatArea.setText(chatHistory.get(userSelected));
-        } else {
-            chatHistory.put(userSelected, "");
-            chatArea.setText("");
-        }
     }
 
     private void onClickSendButton() {
@@ -141,14 +133,31 @@ public class ChatGUI extends JFrame {
     }
 
     public void updateHistory(String key, String sender, String newMessage) {
+        String messageFormated = sender + ": " + newMessage + "\n";
+
         if (chatHistory.containsKey(key)) {
             String currentValue = chatHistory.get(key);
-            String newValue = currentValue.concat(sender + ": " + newMessage);
+            String newValue = currentValue.concat(messageFormated);
 
             chatHistory.replace(key, newValue);
         } else {
-            chatHistory.put(key, sender + ": " + newMessage);
+            chatHistory.put(key, messageFormated);
         }
+
+        updateChatArea();
+    }
+
+    private void updateChatArea() {
+        SwingUtilities.invokeLater(() -> {
+            String userSelected = userList.getSelectedValue();
+
+            if (chatHistory.containsKey(userSelected)) {
+                chatArea.setText(chatHistory.get(userSelected));
+            } else {
+                chatHistory.put(userSelected, "");
+                chatArea.setText("");
+            }
+        });
     }
 
     public String getUsername() {
@@ -156,7 +165,7 @@ public class ChatGUI extends JFrame {
     }
 
     public void setUsers(List<String> users) {
-        userList.setListData(users.toArray(new String[0]));
+        SwingUtilities.invokeLater(() -> userList.setListData(users.toArray(new String[0])));
     }
 
     public void setUserCreated(boolean userCreated) {

@@ -26,6 +26,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.SwingUtilities;
+
 import client.gui.ChatGUI;
 import protocol.ParsedMessage;
 import protocol.Protocol;
@@ -43,6 +45,13 @@ public class Client implements Runnable {
 
     @Override
     public void run() {
+        SwingUtilities.invokeLater(() -> {
+            gui = new ChatGUI(this);
+
+            gui.inputUsername("Digite seu nome:");
+            sendMessage(GET_USERS);
+        });
+
         waitForMessages();
     }
 
@@ -55,11 +64,6 @@ public class Client implements Runnable {
 
             Thread t = new Thread(this);
             t.start();
-
-            gui = new ChatGUI(this);
-
-            gui.inputUsername("Digite seu nome:");
-            sendMessage(GET_USERS);
         } catch (Exception e) {
             e.printStackTrace();
         }

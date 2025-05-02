@@ -1,7 +1,6 @@
 package server;
 
 import static protocol.Errors.DUPLICATED_USER;
-import static protocol.Protocol.SEPARATOR;
 import static protocol.Protocol.formatProperty;
 import static protocol.ProtocolMethods.CREATE_USER;
 import static protocol.ProtocolMethods.GET_USERS;
@@ -54,7 +53,7 @@ public class Server {
     }
 
     public void processRequest(ConnectedClient sender, String message) throws Exception {
-        System.out.printf("\n--//--\nRequest received: \n%s\n--//--\n", message);
+        System.out.printf("\nMessage received: \n%s\n", message);
 
         ParsedMessage parsedMessage = Protocol.parseMessage(message);
 
@@ -81,7 +80,6 @@ public class Server {
         String username = message.getProperty(USERNAME);
 
         if (findClient(username) != null) {
-            System.out.println("Duplicated user");
             sender.sendMessage(1, CREATE_USER, DUPLICATED_USER);
             return;
         }
@@ -91,7 +89,6 @@ public class Server {
         sender.setUsername(username);
         clients.set(pos, sender);
 
-        System.out.println("User created: " + username);
         sender.sendMessage(CREATE_USER);
 
         for (ConnectedClient client : clients) {
@@ -108,7 +105,6 @@ public class Server {
 
         String body = formatProperty(USERNAMES, String.join(",", usernames));
 
-        System.out.println("Users retrieved");
         sender.sendMessage(1, GET_USERS, body);
     }
 
@@ -123,7 +119,6 @@ public class Server {
             }
         }
 
-        System.out.println("Public message sent by " + sender.getUsername());
         sender.sendMessage(SEND_PUBLIC_MESSAGE);
     }
 
@@ -137,7 +132,6 @@ public class Server {
 
         recipient.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
 
-        System.out.printf("\nMessage sent from %s to %s", username, recipient.getUsername());
         sender.sendMessage(SEND_PRIVATE_MESSAGE);
     }
 

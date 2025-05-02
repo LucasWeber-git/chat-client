@@ -1,6 +1,7 @@
 package client;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Arrays.asList;
 import static protocol.Errors.DUPLICATED_USER;
 import static protocol.Protocol.NEW_LINE;
@@ -22,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 import client.gui.ChatGUI;
@@ -55,6 +57,9 @@ public class Client implements Runnable {
             t.start();
 
             gui = new ChatGUI(this);
+
+            gui.inputUsername("Digite seu nome:");
+            sendMessage(GET_USERS);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -71,6 +76,10 @@ public class Client implements Runnable {
     }
 
     private void messageReceived(String header) throws Exception {
+        if (header == null || header.isBlank()) {
+            return;
+        }
+
         if (isHeaderValid(header)) {
             StringBuilder message = new StringBuilder(header);
 
@@ -85,7 +94,7 @@ public class Client implements Runnable {
     }
 
     private void processMessage(String message) throws Exception {
-        System.out.printf("\n--//--\nMessage received: \n%s\n--//--\n", message);
+        System.out.printf("\nMessage received: \n%s\n", message);
 
         ParsedMessage parsedMessage = Protocol.parseMessage(message);
 
@@ -121,7 +130,10 @@ public class Client implements Runnable {
 
     private void handleGetUsersResponse(ParsedMessage message) throws Exception {
         String usernames = message.getProperty(USERNAMES);
-        List<String> newUsers = asList(usernames.split(","));
+        List<String> newUsers = new ArrayList<>(asList(usernames.split(",")));
+
+        newUsers.remove(gui.getUsername());
+        newUsers.sort(CASE_INSENSITIVE_ORDER);
 
         gui.setUsers(newUsers);
         gui.render();
@@ -132,39 +144,39 @@ public class Client implements Runnable {
     }
 
     private void handlePrivateMessageResponse(ParsedMessage message) throws Exception {
-        if (message.getSize() == 0) {
-            System.out.println("Private message sent");
-        } else {
+        if (message.getSize() != 0) {
             String sender = message.getProperty(SENDER);
             String content = message.getProperty(CONTENT);
 
             gui.updateHistory(sender, sender, content);
-
-            System.out.println("Message received from " + sender);
         }
     }
 
     private void handlePublicMessageResponse(ParsedMessage message) throws Exception {
-        if (message.getSize() == 0) {
-            System.out.println("Public message sent");
-        } else {
+        if (message.getSize() != 0) {
             String sender = message.getProperty(SENDER);
             String content = message.getProperty(CONTENT);
 
             gui.updateHistory(sender, sender, content);
-
-            System.out.println("Message received from " + sender);
         }
     }
 
     public void sendMessage(String method) {
-        out.println(ZERO + SEPARATOR + method);
+        String message = ZERO + SEPARATOR + method;
+
+        out.println(message);
         out.flush();
+
+        System.out.printf("\nMessage sent: \n%s\n", message);
     }
 
     public void sendMessage(int size, String method, String body) {
-        out.println(size + SEPARATOR + method + NEW_LINE + body);
+        String message = size + SEPARATOR + method + NEW_LINE + body;
+
+        out.println(message);
         out.flush();
+
+        System.out.printf("\nMessage sent: \n%s", message);
     }
 
 }

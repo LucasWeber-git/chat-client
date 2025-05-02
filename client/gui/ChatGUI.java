@@ -8,7 +8,6 @@ import static javax.swing.JOptionPane.showInputDialog;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static protocol.Protocol.formatProperty;
 import static protocol.ProtocolMethods.CREATE_USER;
-import static protocol.ProtocolMethods.GET_USERS;
 import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
 import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
 import static protocol.ProtocolProperties.CONTENT;
@@ -49,9 +48,6 @@ public class ChatGUI extends JFrame {
     public ChatGUI(Client client) {
         super("Cliente para Chat");
         this.client = client;
-
-        inputUsername("Digite seu nome:");
-        client.sendMessage(GET_USERS);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(720, 500);
@@ -122,6 +118,7 @@ public class ChatGUI extends JFrame {
         } else {
             this.sendPrivateMessage();
         }
+        txtMessage.setText("");
     }
 
     private void sendPublicMessage() {
@@ -144,17 +141,25 @@ public class ChatGUI extends JFrame {
     }
 
     public void updateHistory(String key, String sender, String newMessage) {
-        String currentValue = chatHistory.get(key);
-        String newValue = currentValue.concat(sender + ": " + newMessage);
+        if (chatHistory.containsKey(key)) {
+            String currentValue = chatHistory.get(key);
+            String newValue = currentValue.concat(sender + ": " + newMessage);
 
-        chatHistory.replace(key, newValue);
+            chatHistory.replace(key, newValue);
+        } else {
+            chatHistory.put(key, sender + ": " + newMessage);
+        }
     }
 
-    public void setUsers(final List<String> users) {
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsers(List<String> users) {
         userList.setListData(users.toArray(new String[0]));
     }
 
-    public void setUserCreated(final boolean userCreated) {
+    public void setUserCreated(boolean userCreated) {
         isUserCreated = userCreated;
     }
 

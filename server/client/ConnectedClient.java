@@ -11,6 +11,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 import server.Server;
 
@@ -42,19 +43,30 @@ public class ConnectedClient implements Runnable {
     }
 
     public void sendMessage(String method) {
-        out.println(ZERO + SEPARATOR + method);
+        String message = ZERO + SEPARATOR + method;
+
+        out.println(message);
         out.flush();
+
+        System.out.printf("\nMessage sent: \n%s\n", message);
     }
 
     public void sendMessage(int size, String method, String body) {
-        out.println(size + SEPARATOR + method + NEW_LINE + body);
+        String message = size + SEPARATOR + method + NEW_LINE + body;
+
+        out.println(message);
         out.flush();
+
+        System.out.printf("\nMessage sent: \n%s", message);
     }
 
     public void waitForMessages() {
         while (true) {
             try {
                 messageReceived(in.readLine());
+            } catch (SocketException e) {
+                e.printStackTrace();
+                return;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -62,6 +74,10 @@ public class ConnectedClient implements Runnable {
     }
 
     private void messageReceived(String header) throws Exception {
+        if (header == null || header.isBlank()) {
+            return;
+        }
+
         if (isHeaderValid(header)) {
             StringBuilder message = new StringBuilder(header);
 

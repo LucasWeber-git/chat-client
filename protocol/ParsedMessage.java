@@ -8,7 +8,7 @@ public class ParsedMessage {
     private final String method;
     private final Map<String, String> properties;
 
-    public ParsedMessage(final Integer size, final String method, final Map<String, String> properties) {
+    public ParsedMessage(Integer size, String method, Map<String, String> properties) {
         this.size = size;
         this.method = method;
         this.properties = properties;

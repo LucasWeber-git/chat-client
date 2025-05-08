@@ -31,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import client.Client;
 
@@ -61,7 +62,7 @@ public class ChatGUI extends JFrame {
 
         userList = new JList<>(userListModel);
         userList.setSelectionMode(SINGLE_SELECTION);
-        userList.addListSelectionListener(e -> onUserSelectionChange(e));
+        userList.addListSelectionListener(this::onUserSelectionChange);
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
@@ -71,7 +72,7 @@ public class ChatGUI extends JFrame {
         ckPublic = new JCheckBox("Mensagem pública");
 
         btSend = new JButton("Enviar mensagem");
-        btSend.addActionListener(e -> onClickSendButton(e));
+        btSend.addActionListener(this::onClickSendButton);
     }
 
     public void render() {
@@ -97,7 +98,7 @@ public class ChatGUI extends JFrame {
             }
         }
 
-        this.setVisible(true);
+        SwingUtilities.invokeLater(() -> this.setVisible(true));
     }
 
     public void inputUsername(String message) {
@@ -108,17 +109,14 @@ public class ChatGUI extends JFrame {
     }
 
     private void onUserSelectionChange(EventObject e) {
-        String userSelected = userList.getSelectedValue();
-
-        if (chatHistory.containsKey(userSelected)) {
-            chatArea.setText(chatHistory.get(userSelected));
-        } else {
-            chatHistory.put(userSelected, "");
-            chatArea.setText("");
-        }
+        reloadChat();
     }
 
     private void onClickSendButton(EventObject e) {
+        if (txtMessage.getText() == null || txtMessage.getText().isBlank()) {
+            return;
+        }
+
         if (ckPublic.isSelected()) {
             this.sendPublicMessage();
         } else {
@@ -132,7 +130,7 @@ public class ChatGUI extends JFrame {
         client.sendMessage(1, SEND_PUBLIC_MESSAGE, body);
 
         for (String key : chatHistory.keySet()) {
-            updateHistory(key, username, txtMessage.getText());
+            addMessageToHistory(key, username, txtMessage.getText());
         }
     }
 
@@ -143,22 +141,33 @@ public class ChatGUI extends JFrame {
 
         client.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
 
-        updateHistory(userList.getSelectedValue(), username, txtMessage.getText());
+        addMessageToHistory(userList.getSelectedValue(), username, txtMessage.getText());
     }
 
-    public void updateHistory(String key, String sender, String newMessage) {
+    public void addMessageToHistory(String key, String sender, String newMessage) {
+        String formattedMessage = sender + ": " + newMessage + "\n";
+
         if (chatHistory.containsKey(key)) {
             String currentValue = chatHistory.get(key);
-            String newValue = currentValue.concat(sender + ": " + newMessage);
+            String newValue = currentValue.concat(formattedMessage);
 
             chatHistory.replace(key, newValue);
         } else {
-            chatHistory.put(key, sender + ": " + newMessage);
+            chatHistory.put(key, formattedMessage);
         }
+
+        reloadChat();
     }
 
-    public String getUsername() {
-        return username;
+    private void reloadChat() {
+        String userSelected = userList.getSelectedValue();
+
+        if (chatHistory.containsKey(userSelected)) {
+            chatArea.setText(chatHistory.get(userSelected));
+        } else {
+            chatHistory.put(userSelected, "");
+            chatArea.setText("");
+        }
     }
 
     public void setUsers(List<String> newUsers) {
@@ -172,11 +181,12 @@ public class ChatGUI extends JFrame {
 
         if (selected != null) {
             userList.setSelectedValue(selected, rootPaneCheckingEnabled);
-        }        
+        }
     }
 
-    public void setUserCreated(boolean userCreated) {
-        isUserCreated = userCreated;
+    public void onUserCreated() {
+        isUserCreated = true;
+        this.setTitle("Cliente para Chat | " + username);
     }
 
 }

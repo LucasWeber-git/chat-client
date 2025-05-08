@@ -125,7 +125,7 @@ public class Client implements Runnable {
         if (DUPLICATED_USER.equals(message.getPropertyNullable(ERROR))) {
             gui.inputUsername("Usuário já cadastrado! Digite outro nome:");
         } else {
-            gui.setUserCreated(true);
+            gui.onUserCreated();
         }
     }
 
@@ -145,7 +145,7 @@ public class Client implements Runnable {
             String sender = message.getProperty(SENDER);
             String content = message.getProperty(CONTENT);
 
-            gui.updateHistory(sender, sender, content);
+            gui.addMessageToHistory(sender, sender, content);
         }
     }
 
@@ -154,7 +154,7 @@ public class Client implements Runnable {
             String sender = message.getProperty(SENDER);
             String content = message.getProperty(CONTENT);
 
-            gui.updateHistory(sender, sender, content);
+            gui.addMessageToHistory(sender, sender, content);
         }
     }
 

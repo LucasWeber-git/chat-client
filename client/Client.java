@@ -1,7 +1,6 @@
 package client;
 
 import static java.lang.Integer.parseInt;
-import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static java.util.Arrays.asList;
 import static protocol.Errors.DUPLICATED_USER;
 import static protocol.Protocol.NEW_LINE;
@@ -59,6 +58,8 @@ public class Client implements Runnable {
             gui = new ChatGUI(this);
 
             gui.inputUsername("Digite seu nome:");
+            gui.render();
+            
             sendMessage(GET_USERS);
         } catch (Exception e) {
             e.printStackTrace();
@@ -132,11 +133,7 @@ public class Client implements Runnable {
         String usernames = message.getProperty(USERNAMES);
         List<String> newUsers = new ArrayList<>(asList(usernames.split(",")));
 
-        newUsers.remove(gui.getUsername());
-        newUsers.sort(CASE_INSENSITIVE_ORDER);
-
         gui.setUsers(newUsers);
-        gui.render();
     }
 
     private void handleUserCreated() {

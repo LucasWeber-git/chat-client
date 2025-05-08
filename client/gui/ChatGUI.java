@@ -4,6 +4,7 @@ import static java.awt.BorderLayout.CENTER;
 import static java.awt.BorderLayout.EAST;
 import static java.awt.BorderLayout.SOUTH;
 import static java.awt.BorderLayout.WEST;
+import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static javax.swing.JOptionPane.showInputDialog;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static protocol.Protocol.formatProperty;
@@ -16,10 +17,12 @@ import static protocol.ProtocolProperties.USERNAME;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.util.EventObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -39,6 +42,7 @@ public class ChatGUI extends JFrame {
     private boolean isUserCreated = false;
     private final Map<String, String> chatHistory = new HashMap<>();
 
+    private final DefaultListModel<String> userListModel;
     private final JList<String> userList;
     private final JTextArea chatArea;
     private final JTextField txtMessage;
@@ -53,9 +57,11 @@ public class ChatGUI extends JFrame {
         setSize(720, 500);
         setLocationRelativeTo(null);
 
-        userList = new JList<>();
+        userListModel = new DefaultListModel<>();
+
+        userList = new JList<>(userListModel);
         userList.setSelectionMode(SINGLE_SELECTION);
-        userList.addListSelectionListener(e -> onUserSelectionChange());
+        userList.addListSelectionListener(e -> onUserSelectionChange(e));
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
@@ -65,7 +71,7 @@ public class ChatGUI extends JFrame {
         ckPublic = new JCheckBox("Mensagem pública");
 
         btSend = new JButton("Enviar mensagem");
-        btSend.addActionListener(e -> onClickSendButton());
+        btSend.addActionListener(e -> onClickSendButton(e));
     }
 
     public void render() {
@@ -101,7 +107,7 @@ public class ChatGUI extends JFrame {
         client.sendMessage(1, CREATE_USER, body);
     }
 
-    private void onUserSelectionChange() {
+    private void onUserSelectionChange(EventObject e) {
         String userSelected = userList.getSelectedValue();
 
         if (chatHistory.containsKey(userSelected)) {
@@ -112,7 +118,7 @@ public class ChatGUI extends JFrame {
         }
     }
 
-    private void onClickSendButton() {
+    private void onClickSendButton(EventObject e) {
         if (ckPublic.isSelected()) {
             this.sendPublicMessage();
         } else {
@@ -155,8 +161,18 @@ public class ChatGUI extends JFrame {
         return username;
     }
 
-    public void setUsers(List<String> users) {
-        userList.setListData(users.toArray(new String[0]));
+    public void setUsers(List<String> newUsers) {
+        newUsers.remove(username);
+        newUsers.sort(CASE_INSENSITIVE_ORDER);
+
+        String selected = userList.getSelectedValue();
+
+        userListModel.clear();
+        userListModel.addAll(newUsers);
+
+        if (selected != null) {
+            userList.setSelectedValue(selected, rootPaneCheckingEnabled);
+        }        
     }
 
     public void setUserCreated(boolean userCreated) {

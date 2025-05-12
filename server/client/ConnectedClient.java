@@ -2,10 +2,11 @@ package server.client;
 
 import static java.lang.Integer.parseInt;
 import static protocol.Protocol.NEW_LINE;
-import static protocol.Protocol.SEPARATOR;
 import static protocol.Protocol.ZERO;
+import static protocol.Protocol.formatProperty;
 import static protocol.Protocol.getLineFirstValue;
 import static protocol.ProtocolValidator.isHeaderValid;
+import static protocol.domain.ProtocolProperties.ERROR;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -42,18 +43,26 @@ public class ConnectedClient implements Runnable {
         }
     }
 
-    public void sendMessage(String method) {
-        String message = ZERO + SEPARATOR + method;
+    public void sendMessage(int size, String method, String body) {
+        String header = formatProperty(String.valueOf(size), method);
 
-        out.println(message);
-        out.flush();
-
-        System.out.printf("\nMessage sent: \n%s\n", message);
+        send(header + body);
     }
 
-    public void sendMessage(int size, String method, String body) {
-        String message = size + SEPARATOR + method + NEW_LINE + body;
+    public void sendEmptyMessage(String method) {
+        String header = formatProperty(ZERO, method);
 
+        send(header);
+    }
+
+    public void sendErrorMessage(String method, String errorMessage) {
+        String header = formatProperty("1", method);
+        String body = formatProperty(ERROR, errorMessage);
+
+        send(header + NEW_LINE + body);
+    }
+
+    private void send(String message) {
         out.println(message);
         out.flush();
 
@@ -65,7 +74,7 @@ public class ConnectedClient implements Runnable {
             try {
                 messageReceived(in.readLine());
             } catch (SocketException e) {
-                e.printStackTrace();
+                System.out.println("\nClient disconnected");
                 return;
             } catch (Exception e) {
                 e.printStackTrace();
@@ -88,16 +97,6 @@ public class ConnectedClient implements Runnable {
             }
 
             server.processRequest(this, message.toString());
-        }
-    }
-
-    public void close() {
-        try {
-            in.close();
-            out.close();
-            socket.close();
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 

@@ -9,6 +9,8 @@ import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import protocol.dto.ParsedMessage;
+
 public class ProtocolParser {
 
     public static ParsedMessage parse(String message) throws IOException {

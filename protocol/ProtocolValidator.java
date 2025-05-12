@@ -4,8 +4,8 @@ import static java.lang.Integer.parseInt;
 import static protocol.Protocol.SEPARATOR;
 import static protocol.Protocol.getLineFirstValue;
 import static protocol.Protocol.getLineLastValue;
-import static protocol.ProtocolMethods.allMethods;
-import static protocol.ProtocolProperties.allProperties;
+import static protocol.domain.ProtocolMethods.allMethods;
+import static protocol.domain.ProtocolProperties.allProperties;
 
 import java.io.BufferedReader;
 import java.io.IOException;

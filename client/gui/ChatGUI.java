@@ -8,12 +8,13 @@ import static java.lang.String.CASE_INSENSITIVE_ORDER;
 import static javax.swing.JOptionPane.showInputDialog;
 import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 import static protocol.Protocol.formatProperty;
-import static protocol.ProtocolMethods.CREATE_USER;
-import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
-import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
-import static protocol.ProtocolProperties.CONTENT;
-import static protocol.ProtocolProperties.RECIPIENT;
-import static protocol.ProtocolProperties.USERNAME;
+import static protocol.domain.ProtocolMethods.CREATE_USER;
+import static protocol.domain.ProtocolMethods.GET_USERS;
+import static protocol.domain.ProtocolMethods.SEND_PRIVATE_MESSAGE;
+import static protocol.domain.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.domain.ProtocolProperties.CONTENT;
+import static protocol.domain.ProtocolProperties.RECIPIENT;
+import static protocol.domain.ProtocolProperties.USERNAME;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -40,7 +41,6 @@ public class ChatGUI extends JFrame {
     private final Client client;
 
     private String username;
-    private boolean isUserCreated = false;
     private final Map<String, String> chatHistory = new HashMap<>();
 
     private final DefaultListModel<String> userListModel;
@@ -79,26 +79,22 @@ public class ChatGUI extends JFrame {
         JScrollPane usersScrollPane = new JScrollPane(userList);
         usersScrollPane.setPreferredSize(new Dimension(120, 0));
 
-        JPanel inputPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(ckPublic);
+        buttonPanel.add(btSend);
 
+        JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.add(txtMessage, CENTER);
-        inputPanel.add(ckPublic, EAST);
-        inputPanel.add(btSend, EAST);
+        inputPanel.add(buttonPanel, EAST);
 
         getContentPane().setLayout(new BorderLayout());
         getContentPane().add(usersScrollPane, WEST);
         getContentPane().add(new JScrollPane(chatArea), CENTER);
         getContentPane().add(inputPanel, SOUTH);
 
-        while (!isUserCreated) {
-            try {
-                Thread.sleep(10);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        inputUsername("Digite seu nome:");
 
-        SwingUtilities.invokeLater(() -> this.setVisible(true));
+        client.sendMessage(GET_USERS);
     }
 
     public void inputUsername(String message) {
@@ -106,6 +102,13 @@ public class ChatGUI extends JFrame {
         String body = formatProperty(USERNAME, username);
 
         client.sendMessage(1, CREATE_USER, body);
+    }
+
+    public void onUserCreated() {
+        SwingUtilities.invokeLater(() -> {
+            this.setTitle("Cliente para Chat | " + username);
+            this.setVisible(true);
+        });
     }
 
     private void onUserSelectionChange(EventObject e) {
@@ -182,11 +185,6 @@ public class ChatGUI extends JFrame {
         if (selected != null) {
             userList.setSelectedValue(selected, rootPaneCheckingEnabled);
         }
-    }
-
-    public void onUserCreated() {
-        isUserCreated = true;
-        this.setTitle("Cliente para Chat | " + username);
     }
 
 }

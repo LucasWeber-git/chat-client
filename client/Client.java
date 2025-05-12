@@ -2,20 +2,20 @@ package client;
 
 import static java.lang.Integer.parseInt;
 import static java.util.Arrays.asList;
-import static protocol.Errors.DUPLICATED_USER;
+import static protocol.domain.ErrorMessages.DUPLICATED_USER;
 import static protocol.Protocol.NEW_LINE;
 import static protocol.Protocol.SEPARATOR;
 import static protocol.Protocol.ZERO;
 import static protocol.Protocol.getLineFirstValue;
-import static protocol.ProtocolMethods.CREATE_USER;
-import static protocol.ProtocolMethods.GET_USERS;
-import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
-import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
-import static protocol.ProtocolMethods.USER_CREATED;
-import static protocol.ProtocolProperties.CONTENT;
-import static protocol.ProtocolProperties.ERROR;
-import static protocol.ProtocolProperties.SENDER;
-import static protocol.ProtocolProperties.USERNAMES;
+import static protocol.domain.ProtocolMethods.CREATE_USER;
+import static protocol.domain.ProtocolMethods.GET_USERS;
+import static protocol.domain.ProtocolMethods.SEND_PRIVATE_MESSAGE;
+import static protocol.domain.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.domain.ProtocolMethods.USER_CREATED;
+import static protocol.domain.ProtocolProperties.CONTENT;
+import static protocol.domain.ProtocolProperties.ERROR;
+import static protocol.domain.ProtocolProperties.SENDER;
+import static protocol.domain.ProtocolProperties.USERNAMES;
 import static protocol.ProtocolValidator.isHeaderValid;
 
 import java.io.BufferedReader;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import client.gui.ChatGUI;
-import protocol.ParsedMessage;
+import protocol.dto.ParsedMessage;
 import protocol.Protocol;
 
 public class Client implements Runnable {
@@ -56,11 +56,7 @@ public class Client implements Runnable {
             t.start();
 
             gui = new ChatGUI(this);
-
-            gui.inputUsername("Digite seu nome:");
             gui.render();
-            
-            sendMessage(GET_USERS);
         } catch (Exception e) {
             e.printStackTrace();
         }

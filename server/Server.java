@@ -1,17 +1,17 @@
 package server;
 
-import static protocol.Errors.DUPLICATED_USER;
 import static protocol.Protocol.formatProperty;
-import static protocol.ProtocolMethods.CREATE_USER;
-import static protocol.ProtocolMethods.GET_USERS;
-import static protocol.ProtocolMethods.SEND_PRIVATE_MESSAGE;
-import static protocol.ProtocolMethods.SEND_PUBLIC_MESSAGE;
-import static protocol.ProtocolMethods.USER_CREATED;
-import static protocol.ProtocolProperties.CONTENT;
-import static protocol.ProtocolProperties.RECIPIENT;
-import static protocol.ProtocolProperties.SENDER;
-import static protocol.ProtocolProperties.USERNAME;
-import static protocol.ProtocolProperties.USERNAMES;
+import static protocol.domain.ErrorMessages.DUPLICATED_USER;
+import static protocol.domain.ProtocolMethods.CREATE_USER;
+import static protocol.domain.ProtocolMethods.GET_USERS;
+import static protocol.domain.ProtocolMethods.SEND_PRIVATE_MESSAGE;
+import static protocol.domain.ProtocolMethods.SEND_PUBLIC_MESSAGE;
+import static protocol.domain.ProtocolMethods.USER_CREATED;
+import static protocol.domain.ProtocolProperties.CONTENT;
+import static protocol.domain.ProtocolProperties.RECIPIENT;
+import static protocol.domain.ProtocolProperties.SENDER;
+import static protocol.domain.ProtocolProperties.USERNAME;
+import static protocol.domain.ProtocolProperties.USERNAMES;
 
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import protocol.ParsedMessage;
 import protocol.Protocol;
+import protocol.dto.ParsedMessage;
 import server.client.ConnectedClient;
 
 public class Server {
@@ -33,22 +33,15 @@ public class Server {
     }
 
     private void waitForClients() {
-        ServerSocket serverSocket = null;
-        Socket socket = null;
-
         try {
-            serverSocket = new ServerSocket(8084);
+            ServerSocket serverSocket = new ServerSocket(8084);
 
             while (true) {
-                socket = serverSocket.accept();
-
-                ConnectedClient client = new ConnectedClient(socket, this);
-                clients.add(client);
+                Socket socket = serverSocket.accept();
+                new ConnectedClient(socket, this);
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            close(serverSocket, socket);
         }
     }
 
@@ -79,21 +72,19 @@ public class Server {
     private void createUser(ConnectedClient sender, ParsedMessage message) throws Exception {
         String username = message.getProperty(USERNAME);
 
-        if (findClient(username) != null) {
-            sender.sendMessage(1, CREATE_USER, DUPLICATED_USER);
+        if (findClientByUsername(username) != null) {
+            sender.sendErrorMessage(CREATE_USER, DUPLICATED_USER);
             return;
         }
 
-        int pos = clients.indexOf(sender);
-
         sender.setUsername(username);
-        clients.set(pos, sender);
+        clients.add(sender);
 
-        sender.sendMessage(CREATE_USER);
+        sender.sendEmptyMessage(CREATE_USER);
 
         for (ConnectedClient client : clients) {
             if (client != sender) {
-                client.sendMessage(USER_CREATED);
+                client.sendEmptyMessage(USER_CREATED);
             }
         }
     }
@@ -119,12 +110,11 @@ public class Server {
             }
         }
 
-        sender.sendMessage(SEND_PUBLIC_MESSAGE);
+        sender.sendEmptyMessage(SEND_PUBLIC_MESSAGE);
     }
 
     private void sendPrivateMessage(ConnectedClient sender, ParsedMessage message) throws Exception {
-        String username = sender.getUsername();
-        ConnectedClient recipient = findClient(message.getProperty(RECIPIENT));
+        ConnectedClient recipient = findClientByUsername(message.getProperty(RECIPIENT));
 
         String senderUser = formatProperty(SENDER, sender.getUsername());
         String content = formatProperty(CONTENT, message.getProperty(CONTENT));
@@ -132,33 +122,14 @@ public class Server {
 
         recipient.sendMessage(2, SEND_PRIVATE_MESSAGE, body);
 
-        sender.sendMessage(SEND_PRIVATE_MESSAGE);
+        sender.sendEmptyMessage(SEND_PRIVATE_MESSAGE);
     }
 
-    private ConnectedClient findClient(String username) {
+    private ConnectedClient findClientByUsername(String username) {
         return clients.stream()
-            .filter(c -> username.equals(c.getUsername()))
+            .filter(c -> username.equalsIgnoreCase(c.getUsername()))
             .findFirst()
             .orElse(null);
-    }
-
-    private void close(ServerSocket serverSocket, Socket socket) {
-        try {
-            if (serverSocket != null) {
-                serverSocket.close();
-            }
-            if (socket != null) {
-                socket.close();
-            }
-
-            for (ConnectedClient client : clients) {
-                client.close();
-            }
-
-            System.out.println("Server stopped.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 }

@@ -3,6 +3,8 @@ package protocol;
 import static protocol.ProtocolParser.parse;
 import static protocol.ProtocolValidator.validate;
 
+import protocol.dto.ParsedMessage;
+
 public class Protocol {
 
     public static final String SEPARATOR = "|";

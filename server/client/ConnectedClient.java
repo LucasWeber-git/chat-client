@@ -59,7 +59,7 @@ public class ConnectedClient implements Runnable {
         String header = formatProperty("1", method);
         String body = formatProperty(ERROR, errorMessage);
 
-        send(header + NEW_LINE + body);
+        send(header + body);
     }
 
     private void send(String message) {
